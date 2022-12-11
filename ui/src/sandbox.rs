@@ -87,6 +87,8 @@ pub enum Error {
     VersionHashMissing,
     #[snafu(display("Commit date was missing from the version output"))]
     VersionDateMissing,
+    #[snafu(display("Unable to deserialize response: {}", source))]
+    Deserialization { source: serde_json::Error },
 }
 
 pub type Result<T, E = Error> = ::std::result::Result<T, E>;
@@ -329,6 +331,18 @@ impl Sandbox {
             stdout,
             stderr,
         })
+    }
+
+    pub async fn visualize(&self, req: &VisualizeRequest) -> Result<VisualizeResponse> {
+        log::debug!("visualizing\n{}", req.code);
+        self.write_source_code(&req.code).await?;
+        let mut cmd = self.docker_command(None);
+        cmd.arg("errorviz")
+            .args(["errorviz", "/playground/src/main.rs", "/tmp/rustviz"]);
+        let output = run_command_with_timeout(cmd).await?;
+        let json = vec_to_str(output.stdout)?;
+        eprintln!("{}", String::from_utf8_lossy(&output.stderr));
+        serde_json::from_str(&json).context(DeserializationSnafu)
     }
 
     pub async fn execute(&self, req: &ExecuteRequest) -> Result<ExecuteResponse> {
@@ -968,6 +982,18 @@ pub struct ExecuteResponse {
     pub success: bool,
     pub stdout: String,
     pub stderr: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct VisualizeRequest {
+    pub code: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct VisualizeResponse {
+    // TODO: maybe change to status code
+    pub success: bool,
+    pub svgs: Vec<crate::SvgItem>,
 }
 
 #[derive(Debug, Clone)]

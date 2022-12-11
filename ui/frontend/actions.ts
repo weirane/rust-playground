@@ -39,6 +39,7 @@ const routes = {
   format: { pathname: '/format' },
   clippy: { pathname: '/clippy' },
   miri: { pathname: '/miri' },
+  visualize: { pathname: '/visualize' },
   macroExpansion: { pathname: '/macro-expansion' },
   meta: {
     crates: { pathname: '/meta/crates' },
@@ -127,6 +128,9 @@ export enum ActionType {
   NotificationSeen = 'NOTIFICATION_SEEN',
   BrowserWidthChanged = 'BROWSER_WIDTH_CHANGED',
   SplitRatioChanged = 'SPLIT_RATIO_CHANGED',
+  RequestVisualization = 'REQUEST_VISUALIZATION',
+  VisualizationSucceeded = 'VISUALIZATION_SUCCEEDED',
+  VisualizationFailed = 'VISUALIZATION_FAILED',
 }
 
 export const initializeApplication = () => createAction(ActionType.InitializeApplication);
@@ -676,6 +680,51 @@ export function performMacroExpansion(): ThunkAction {
   };
 }
 
+export interface SVGItem {
+  lineno: number;
+  svg: string;
+}
+
+interface VisualizeSuccess {
+  success: boolean;
+  svgs: SVGItem[];
+  error?: string;
+}
+
+interface VisualizationRequestBody {
+  code: string;
+}
+
+interface VisualizationResponseBody {
+  success: boolean;
+  svgs: SVGItem[];
+  error?: string;
+}
+
+const requestVisualization = () =>
+  createAction(ActionType.RequestVisualization);
+
+const receiveVisualizationSuccess = ({ success, svgs }: VisualizeSuccess) =>
+  createAction(ActionType.VisualizationSucceeded, { success, svgs });
+
+const receiveVisualizationFailure = ({ error }: CompileFailure) =>
+  createAction(ActionType.VisualizationFailed, { error });
+
+export function performVisualizeError(): ThunkAction {
+  return async function(dispatch, getState) {
+    dispatch(requestVisualization());
+    console.log('toggling');
+    const { code } = getState();
+    const body: VisualizationRequestBody = { code };
+    try {
+      const json = await jsonPost<VisualizationResponseBody>(routes.visualize, body);
+      return dispatch(receiveVisualizationSuccess(json));
+    } catch (json: any) {
+      return dispatch(receiveVisualizationFailure(json));
+    }
+  };
+}
+
 interface GistSuccessProps {
   id: string;
   url: string;
@@ -962,4 +1011,7 @@ export type Action =
   | ReturnType<typeof notificationSeen>
   | ReturnType<typeof browserWidthChanged>
   | ReturnType<typeof splitRatioChanged>
+  | ReturnType<typeof requestVisualization>
+  | ReturnType<typeof receiveVisualizationSuccess>
+  | ReturnType<typeof receiveVisualizationFailure>
   ;

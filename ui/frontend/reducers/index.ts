@@ -11,6 +11,7 @@ import page from './page';
 import position from './position';
 import selection from './selection';
 import versions from './versions';
+import withViz from './withViz';
 
 const playgroundApp = combineReducers({
   browser,
@@ -24,6 +25,7 @@ const playgroundApp = combineReducers({
   position,
   selection,
   versions,
+  withViz,
 });
 
 export type State = ReturnType<typeof playgroundApp>;

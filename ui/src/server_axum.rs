@@ -11,7 +11,7 @@ use crate::{
     FormattingSnafu, GhToken, GistCreationSnafu, GistLoadingSnafu, InterpretingSnafu, LintingSnafu,
     MacroExpansionRequest, MacroExpansionResponse, MetaCratesResponse, MetaGistCreateRequest,
     MetaGistResponse, MetaVersionResponse, MetricsToken, MiriRequest, MiriResponse, Result,
-    SandboxCreationSnafu,
+    SandboxCreationSnafu, VisualizationSnafu, VisualizeRequest, VisualizeResponse,
 };
 use async_trait::async_trait;
 use axum::{
@@ -63,6 +63,7 @@ pub(crate) async fn serve(config: Config) {
         .layer(rewrite_help_as_index)
         .route("/evaluate.json", post(evaluate))
         .route("/compile", post(compile))
+        .route("/visualize", post(visualize))
         .route("/execute", post(execute))
         .route("/format", post(format))
         .route("/clippy", post(clippy))
@@ -153,6 +154,16 @@ async fn compile(Json(req): Json<CompileRequest>) -> Result<Json<CompileResponse
     with_sandbox(
         req,
         |sb, req| async move { sb.compile(req).await }.boxed(),
+        VisualizationSnafu,
+    )
+    .await
+    .map(Json)
+}
+
+async fn visualize(Json(req): Json<VisualizeRequest>) -> Result<Json<VisualizeResponse>> {
+    with_sandbox(
+        req,
+        |sb, req| async move { sb.visualize(req).await }.boxed(),
         CompilationSnafu,
     )
     .await

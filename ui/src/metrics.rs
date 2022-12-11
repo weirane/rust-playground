@@ -19,6 +19,7 @@ lazy_static! {
 #[derive(Debug, Copy, Clone, strum::IntoStaticStr)]
 pub(crate) enum Endpoint {
     Compile,
+    Visualize,
     Execute,
     Format,
     Miri,
@@ -125,6 +126,23 @@ where
 {
     fn generate_labels(&self, outcome: Outcome) -> Labels {
         T::generate_labels(self, outcome)
+    }
+}
+
+impl GenerateLabels for sandbox::VisualizeRequest {
+    fn generate_labels(&self, outcome: Outcome) -> Labels {
+        Labels {
+            endpoint: Endpoint::Visualize,
+            outcome,
+
+            target: None,
+            channel: None,
+            mode: None,
+            edition: None,
+            crate_type: None,
+            tests: None,
+            backtrace: None,
+        }
     }
 }
 
@@ -302,6 +320,16 @@ fn common_success_details(success: bool, stderr: &str) -> Outcome {
 impl SuccessDetails for sandbox::CompileResponse {
     fn success_details(&self) -> Outcome {
         common_success_details(self.success, &self.stderr)
+    }
+}
+
+impl SuccessDetails for sandbox::VisualizeResponse {
+    fn success_details(&self) -> Outcome {
+        if self.success {
+            Outcome::Success
+        } else {
+            Outcome::ErrorServer
+        }
     }
 }
 

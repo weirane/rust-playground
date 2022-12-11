@@ -6,6 +6,7 @@ import { useAppDispatch } from '../configureStore';
 
 import AceEditor from './AceEditor';
 import MonacoEditor from './MonacoEditor';
+import ErrorViz from './ErrorViz';
 import { CommonEditorProps, Editor as EditorType, Position, Selection } from '../types';
 import { State } from '../reducers';
 
@@ -122,6 +123,7 @@ const Editor: React.FC = () => {
   const position = useSelector((state: State) => state.position);
   const selection = useSelector((state: State) => state.selection);
   const crates = useSelector((state: State) => state.crates);
+  const withViz = useSelector((state: State) => state.withViz);
 
   const dispatch = useAppDispatch();
   const execute = useCallback(() => dispatch(actions.performPrimaryAction()), [dispatch]);
@@ -130,6 +132,7 @@ const Editor: React.FC = () => {
   const SelectedEditor = editorMap[editor];
 
   return (
+  <div className={styles.container + (withViz.enabled ? ' ' + styles.withviz : '')} >
     <div className={styles.container}>
       <SelectedEditor code={code}
         position={position}
@@ -138,6 +141,8 @@ const Editor: React.FC = () => {
         onEditCode={onEditCode}
         execute={execute} />
     </div>
+    { withViz.enabled && <ErrorViz /> }
+  </div>
   );
 };
 

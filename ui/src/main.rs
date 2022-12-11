@@ -158,6 +158,8 @@ pub enum Error {
     SandboxCreation { source: sandbox::Error },
     #[snafu(display("Compilation operation failed: {}", source))]
     Compilation { source: sandbox::Error },
+    #[snafu(display("Visualization operation failed: {}", source))]
+    Visualization { source: sandbox::Error },
     #[snafu(display("Execution operation failed: {}", source))]
     Execution { source: sandbox::Error },
     #[snafu(display("Evaluation operation failed: {}", source))]
@@ -236,6 +238,23 @@ struct CompileResponse {
     code: String,
     stdout: String,
     stderr: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct VisualizeRequest {
+    code: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct VisualizeResponse {
+    success: bool,
+    svgs: Vec<SvgItem>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SvgItem {
+    lineno: usize,
+    svg: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -364,6 +383,23 @@ struct EvaluateRequest {
 struct EvaluateResponse {
     result: String,
     error: Option<String>,
+}
+
+impl TryFrom<VisualizeRequest> for sandbox::VisualizeRequest {
+    type Error = Error;
+
+    fn try_from(me: VisualizeRequest) -> Result<Self> {
+        Ok(sandbox::VisualizeRequest { code: me.code })
+    }
+}
+
+impl From<sandbox::VisualizeResponse> for VisualizeResponse {
+    fn from(me: sandbox::VisualizeResponse) -> Self {
+        VisualizeResponse {
+            success: me.success,
+            svgs: me.svgs,
+        }
+    }
 }
 
 impl TryFrom<CompileRequest> for sandbox::CompileRequest {

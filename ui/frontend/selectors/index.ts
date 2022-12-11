@@ -113,7 +113,7 @@ export const clippyVersionText = createSelector(getClippy, versionNumber);
 export const rustfmtVersionText = createSelector(getRustfmt, versionNumber);
 export const miriVersionText = createSelector(getMiri, versionNumber);
 
-const versionDetails = (v: Version | undefined) => v ? `${v.date} ${v.hash.slice(0, 20)}` : '';
+const versionDetails = (v: Version | undefined) => v && v.hash ? `${v.date} ${v.hash.slice(0, 20)}` : '';
 export const betaVersionDetailsText = createSelector(getBeta, versionDetails);
 export const nightlyVersionDetailsText = createSelector(getNightly, versionDetails);
 export const clippyVersionDetailsText = createSelector(getClippy, versionDetails);

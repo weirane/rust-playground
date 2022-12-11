@@ -40,9 +40,21 @@ const ToolsMenu: React.FC<ToolsMenuProps> = props => {
     dispatch(actions.performMacroExpansion());
     props.close();
   }, [dispatch, props]);
+  const visualizeError = useCallback(() => {
+    dispatch(actions.performVisualizeError());
+    props.close();
+  }, [dispatch, props]);
 
   return (
     <MenuGroup title="Tools">
+      <ButtonMenuItem
+        name="Visualize lifetime errors"
+        onClick={visualizeError}>
+        <div>
+          Visualize lifetime errors with rustviz.
+        </div>
+        <MenuAside>{nightlyVersion} ({nightlyVersionDetails})</MenuAside>
+      </ButtonMenuItem>
       <ButtonMenuItem
         name="Rustfmt"
         onClick={format}>
